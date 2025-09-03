@@ -1,0 +1,21 @@
+{
+    "name": "seal-integration-test",
+    "version": "1.0.0",
+    "description": "Test harness for SEAL integration with Sui",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "test": "node test.js",
+        "encrypt": "node encrypt-test.js",
+        "decrypt": "node decrypt-test.js"
+    },
+    "dependencies": {
+        "@mysten/seal": "^0.5.2",
+        "@mysten/sui": "^1.37.6",
+        "crypto": "^1.0.1",
+        "node-fetch": "^3.3.2"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0"
+    }
+}

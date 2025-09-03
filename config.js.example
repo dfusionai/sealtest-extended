@@ -1,0 +1,38 @@
+// Configuration for the SEAL integration test
+export const config = {
+    // Sui testnet configuration
+    sui: {
+      network: 'testnet',
+      rpc: 'https://fullnode.testnet.sui.io:443',
+      packageId: '0xec07b168f3c2344f13904793bee335e0928178138f8eeb33ad5acb0caf385fa1', // Replace after deploying
+      module: 'seal_manager'
+    },
+    
+    // Test wallets - replace with your actual testnet addresses
+    wallets: {
+      alice: {
+        address: 'YOUR_ALICE_ADDRESS',
+        privateKey: 'YOUR_ALICE_PRIVATE_KEY'
+      },
+      bob: {
+        address: 'YOUR_BOB_ADDRESS', 
+        privateKey: 'YOUR_BOB_PRIVATE_KEY'
+      },
+      unauthorized: {
+        address: 'YOUR_UNAUTHORIZED_ADDRESS',
+        privateKey: 'YOUR_UNAUTHORIZED_PRIVATE_KEY'
+      }
+    },
+    
+    // Mock data for testing
+    mock: {
+      // Fake Walrus blob ID (32 bytes hex)
+      blobId: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      
+      // Fake TEE enclave ID
+      enclaveId: 'mock_enclave_12345',
+      
+      // Test message to encrypt
+      testMessage: 'This is a secret message for SEAL testing!'
+    }
+  };
