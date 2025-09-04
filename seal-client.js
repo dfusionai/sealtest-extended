@@ -2,7 +2,7 @@ import { SuiClient } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromHex, toHex } from '@mysten/sui/utils';
-import { SealClient as SealSDK, SessionKey } from '@mysten/seal';
+import { EncryptedObject, SealClient as SealSDK, SessionKey } from '@mysten/seal';
 import crypto from 'crypto';
 import { config } from './config.js';
 
@@ -17,7 +17,7 @@ export class SealTestClient {
       suiClient: this.suiClient,
       serverConfigs: [
         {
-          objectId: "0x6068c0acb197dddbacd4746a9de7f025b2ed5a5b6c1b1ab44dade4426d141da2",
+          objectId: config.seal.keyServerObjId,
           weight: 1,
         }
       ],
@@ -157,6 +157,20 @@ export class SealTestClient {
     console.log(`   Transaction bytes length: ${txBytes.length}`);
     console.log(`   Calling SEAL decrypt for user: ${sessionKey.address}`);
 
+    
+    // only need for efficiency --> batch encryption
+    // console.log(`🔐 Fetching decryption keys...`);
+    // await this.sealClient.fetchKeys({
+    //   ids: [tx.pure.vector("u8", Array.from(fromHex(sealId))),],
+    //   txBytes,
+    //   sessionKey,
+    //   threshold: 1,
+    // });
+    
+    // seal client calls EncryptedObject.parse to retrieve seal id, package id, threshold, ...
+    // const encryptedObject = EncryptedObject.parse(encryptedBytes);
+    // console.log('parse encryptedObject', JSON.stringify(encryptedObject));
+    
     // Decrypt using SEAL
     const decryptedBytes = await this.sealClient.decrypt({
       data: encryptedBytes,
@@ -179,7 +193,7 @@ export class SealTestClient {
     
     const message = sessionKey.getPersonalMessage();
     const { signature } = await walletKeypair.signPersonalMessage(Buffer.from(message));
-    sessionKey.setPersonalMessageSignature(signature);
+    await sessionKey.setPersonalMessageSignature(signature);
     
     console.log('Session key created and initialized');
     return sessionKey;
