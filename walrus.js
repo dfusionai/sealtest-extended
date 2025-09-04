@@ -51,8 +51,8 @@ export class WalrusService {
       let flow;
       try {
         flow = this.walrusClient.writeFilesFlow({ files: [walrusFile] });
-        const encodedFile = await flow.encode();
-        console.log("✅ File encoded successfully in flow:", encodedFile);
+        await flow.encode();
+        console.log("✅ File encoded successfully in flow:");
       } catch (flowError) {
         console.error("❌ Failed to create or encode flow:", flowError);
         throw flowError;
@@ -86,6 +86,15 @@ export class WalrusService {
         }));
         console.log("✅ Register transaction digest walletKeypair:", registerDigest);
         
+        // let suiClientRegisterDigest;
+        // console.log("🔑 Signing & executing register transaction...");
+        // ({ digest: suiClientRegisterDigest } = await this.suiClient.signAndExecuteTransaction({
+        //   transaction: registerTx,
+        //   signer: walletKeypair,
+        //   options: { showEffects: true },
+        //   requestType: 'WaitForLocalExecution',
+        // }));
+        // console.log("✅ Register transaction digest suiClient:", suiClientRegisterDigest);
       } catch (signError) {
         console.error("❌ Failed to sign/execute register transaction:", signError);
         throw signError;
@@ -96,6 +105,7 @@ export class WalrusService {
         await this.suiClient.waitForTransaction({
           digest: registerDigest,
           options: { showEffects: true },
+          
         });
         console.log("✅ Register transaction confirmed");
       } catch (confirmError) {
@@ -105,6 +115,22 @@ export class WalrusService {
 
       // Step 3: Upload file data
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      // let registered = false;
+      // while (!registered) {
+      //   console.log('Not registered.');
+      //   try {
+      //     const status = await this.suiClient.getObject({ id: blobObjectId?? });
+      //     console.log('status', JSON.stringify(status));
+      //     if (status?.data) {
+      //       registered = true;
+      //       console.log('Registered!');
+      //     }
+      //   } catch {
+      //     await new Promise((resolve) => setTimeout(resolve, 1000));
+      //   }
+      // }
+      // console.log('✅ Register transaction complete.');
+      
       console.log("📤 Step 3: Uploading file data to relay...");
       try {
         await flow.upload({ digest: registerDigest });

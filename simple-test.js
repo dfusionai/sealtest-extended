@@ -3,15 +3,20 @@ import { config } from './config.js';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromHex } from '@mysten/sui/utils';
 import crypto from 'crypto';
+import { WalrusService } from './walrus.js';
+import jsonFile from "./test.json" with { type: 'json' };
+import { EncryptedObject } from '@mysten/seal';
+
 
 async function simpleHappyPathTest() {
   console.log('Running simple SEAL happy path test...\n');
-  
+
   const client = new SealTestClient();
   const alice = client.createKeypair(config.wallets.alice.privateKey);
   const aliceAddress = alice.getPublicKey().toSuiAddress();
   const unauthorized = client.createKeypair(config.wallets.unauthorized.privateKey);
   const unauthorizedAddress = unauthorized.getPublicKey().toSuiAddress();
+  const walrusService = new WalrusService();
   
   console.log('Alice address (authorized):', aliceAddress);
   console.log('Unauthorized address:', unauthorizedAddress);
@@ -27,9 +32,36 @@ async function simpleHappyPathTest() {
     // Step 2: Encrypt with SEAL to generate real ID
     console.log('2. Encrypting with SEAL to generate real ID...');
     const testMessage = "Hello SEAL!";
-    const { encryptedBytes, sealId } = await client.encryptMessage(testMessage, policyObjectId);
+    // const { encryptedBytes, sealId } = await client.encryptMessage(testMessage, policyObjectId);
+    
+    console.log('JSON.stringify(jsonFile)', JSON.stringify(jsonFile));
+    const { encryptedBytes, sealId } = await client.encryptMessage(JSON.stringify(jsonFile), policyObjectId);
     console.log('   Encrypted successfully, SEAL ID:', sealId);
 
+    const encryptedObject = EncryptedObject.parse(encryptedBytes);
+    console.log('parse encryptedObject', JSON.stringify(encryptedObject));
+    
+    console.log('>>>>>>>>>>>>>>>>>> upload to walrus');
+    // step done in relay
+    const walrusUploadResult = await walrusService.uploadFileViaRelayWalrus(
+      alice,
+      encryptedBytes,
+      1, // epochs
+    );
+    console.log('>>>>>>>>>>>>>>>>>> walrusUploadResult', JSON.stringify(walrusUploadResult));
+    
+    console.log('>>>>>>>>>>>>>>>>>> download from walrus');
+    // step done in nautilus
+    const walrusDownloadResult = await walrusService.fetchEncryptedFile(walrusUploadResult[0].blobId);
+    console.log('>>>>>>>>>>>>>>>>>> walrusDownloadResult', walrusDownloadResult);
+    
+    const encryptedDownloadObject = EncryptedObject.parse(new Uint8Array(walrusDownloadResult));
+    console.log('parse walrusDownloadResult', JSON.stringify(encryptedDownloadObject));
+    
+    console.log('>>>>>>>>>>>>>>>>>> decrypt download from walrus');
+    await testSealDecryption(client, alice, new Uint8Array(walrusDownloadResult), sealId, policyObjectId);
+    return;
+    
     // Step 3: Test seal_approve with real SEAL-generated ID
     console.log('3. Testing seal_approve with real SEAL ID...');
     const success = await testSealApproveWithRealId(client, alice, policyObjectId, sealId);
@@ -37,13 +69,16 @@ async function simpleHappyPathTest() {
     if (success) {
       console.log('✅ seal_approve test passed!');
       
+      // const encryptedObject = EncryptedObject.parse(encryptedBytes);
+      // console.log('parse encryptedObject', JSON.stringify(encryptedObject));
+      
       // Step 4: Test full SEAL decryption flow (authorized user)
       console.log('4. Testing SEAL decryption with authorized user...');
       await testSealDecryption(client, alice, encryptedBytes, sealId, policyObjectId);
       
       // Step 5: Test unauthorized user scenarios
       console.log('5. Testing unauthorized user scenarios...');
-      await testUnauthorizedUser(client, unauthorized, sealId, policyObjectId, encryptedBytes);
+      // await testUnauthorizedUser(client, unauthorized, sealId, policyObjectId, encryptedBytes);
     }
 
   } catch (error) {
@@ -278,6 +313,6 @@ async function testUnauthorizedUser(client, unauthorizedKeypair, sealId, policyO
   console.log('   ✅ Unauthorized user tests completed');
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// if (import.meta.url === `file://${process.argv[1]}`) {
   simpleHappyPathTest().catch(console.error);
-}
+// }

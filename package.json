@@ -12,7 +12,7 @@
     "dependencies": {
         "@mysten/seal": "^0.5.2",
         "@mysten/sui": "^1.37.6",
-        "@mysten/walrus": "^0.6.4",
+        "@mysten/walrus": "^0.6.7",
         "@nestjs/axios": "^4.0.1",
         "crypto": "^1.0.1",
         "node-fetch": "^3.3.2"
